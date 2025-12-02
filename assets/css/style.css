@@ -1,0 +1,201 @@
+/* assets/css/style.css
+   High-contrast, readable UI. Overwrite previous CSS.
+   - Clear text contrast
+   - Strong card surfaces and padding
+   - Accessible colors for buttons/links/icons
+   - Keeps original layout, no HTML change required
+*/
+
+/* Palette and accessibility */
+:root{
+  --page-bg: #eef6f8;        /* soft light background */
+  --surface: #ffffff;        /* card surface (white for max contrast) */
+  --muted: #6b7280;          /* muted text */
+  --text: #0b1220;           /* primary text (dark) */
+  --primary: #006f6a;        /* action color (teal) */
+  --primary-600: #005652;
+  --accent: #004f4c;
+  --danger: #b91c1c;
+  --card-shadow: 0 10px 30px rgba(2,6,23,0.06);
+  --radius-md: 12px;
+}
+
+/* page background and base text */
+html,body {
+  height:100%;
+  background: var(--page-bg);
+  color: var(--text);
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  margin:0;
+  padding:0;
+  line-height:1.55;
+  font-size:16px;
+}
+
+/* ensure all main containers have good contrast */
+.container, .card, main.content {
+  color: var(--text);
+}
+
+/* Sidebar: dark with clear white text */
+.sidebar {
+  background: linear-gradient(180deg, #07363a 0%, #034140 100%);
+  color: #fff !important;
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+.sidebar a, .sidebar .nav-link {
+  color: rgba(255,255,255,0.95) !important;
+  text-decoration: none;
+  font-weight:600;
+}
+.sidebar .nav-link.active {
+  background: rgba(255,255,255,0.06);
+  border-radius:8px;
+}
+
+/* Navbar: white surface, dark text */
+.navbar {
+  background: var(--surface);
+  color: var(--text);
+  border-bottom: 1px solid rgba(11,18,20,0.04);
+}
+.navbar .small-muted { color: var(--muted); }
+
+/* Card surfaces: white with clear shadow and padding */
+.card, .card-hover {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--card-shadow);
+  border: 1px solid rgba(7,15,20,0.03);
+  color: var(--text);
+}
+
+/* Card hover effect (subtle) */
+.card-hover { transition: transform .12s ease, box-shadow .12s ease; }
+.card-hover:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(2,6,23,0.08); }
+
+/* Headings and text */
+h1,h2,h3,h4,h5 { color: var(--text); font-weight:700; margin:0 0 .4rem 0; }
+.small-muted { color: var(--muted); font-size:.92rem; }
+
+/* Post content area: white box for maximum readability */
+.post-content {
+  background: var(--surface);
+  padding: 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(7,15,20,0.03);
+  color: var(--text);
+  box-shadow: 0 8px 20px rgba(2,6,23,0.04);
+  word-wrap: break-word;
+}
+
+/* Paragraphs: spacing optimized for reading */
+.post-content p { margin: .6rem 0; font-size:1rem; color: #14232b; }
+
+/* Lists, group items */
+.list-group-item {
+  background: linear-gradient(180deg,#fff,#fbfeff);
+  border: 1px solid rgba(7,15,20,0.03);
+  border-radius:10px;
+  margin-bottom:8px;
+  color: var(--text);
+}
+
+/* Buttons: solid readable styles */
+.btn-primary {
+  background: linear-gradient(90deg,var(--primary), var(--primary-600));
+  border: none;
+  color: #fff;
+  font-weight:700;
+  padding: .5rem .9rem;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,111,106,0.12);
+}
+.btn-primary:hover { transform: translateY(-1px); }
+
+/* Outline buttons: readable border & bold text */
+.btn-outline-primary {
+  border: 1.5px solid rgba(0,111,106,0.16);
+  color: var(--primary-600);
+  font-weight:700;
+  background: transparent;
+}
+
+/* Danger button */
+.btn-danger {
+  background: linear-gradient(90deg,var(--danger), #9f1a1a);
+  color: #fff;
+  border:none;
+  font-weight:700;
+}
+
+/* Small buttons */
+.btn-sm { padding: .28rem .6rem; border-radius:8px; font-weight:700; }
+
+/* Icons: dark color, slightly bigger so they are visible */
+.bi { font-size:1.12rem; color: var(--accent); vertical-align:-0.08em; font-weight:700; }
+
+/* Action icon boxed style (opt-in via class) */
+.action-icon {
+  display:inline-flex;align-items:center;justify-content:center;
+  width:36px;height:36px;border-radius:8px;background:rgba(0,111,106,0.06);
+  color:var(--accent); font-weight:800;
+}
+
+/* Avatar: white surface, teal text */
+.avatar {
+  background: #fff; color: var(--accent); font-weight:800;
+  width:56px;height:56px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;
+  box-shadow: 0 6px 20px rgba(2,6,23,0.06);
+}
+
+/* Forms: inputs and textarea readable */
+input.form-control, textarea.form-control {
+  background: #fff;
+  border: 1px solid rgba(7,15,20,0.06);
+  color: var(--text);
+  border-radius: 8px;
+  padding: .6rem .75rem;
+}
+input::placeholder, textarea::placeholder { color: #9aa6ad; }
+
+/* Links */
+a { color: var(--primary-600); text-decoration: none; font-weight:600; }
+a:hover { text-decoration:underline; }
+
+/* Badges */
+.badge { font-weight:700; padding:.4em .6em; border-radius:8px; }
+
+/* Admin/member badge colors (clear contrast) */
+.badge.bg-danger { background:#b91c1c; color:#fff; }
+.badge.bg-primary { background:var(--primary); color:#fff; }
+
+/* Chart canvas area: white container */
+.card-body canvas { background: transparent; display:block; }
+
+/* Responsive tweaks */
+@media (max-width:991px) {
+  .sidebar { display:none; }
+  main.content { margin-left:0; padding:18px; }
+  .avatar { width:48px;height:48px; font-size:16px; }
+}
+
+/* Utility: ensure important text never uses low-contrast color */
+.text-muted, .small-muted { color: var(--muted) !important; }
+
+/* Ensure any overlay text gets a semi-opaque backdrop if placed on images */
+.text-on-image {
+  background: rgba(255,255,255,0.85);
+  padding: .18rem .35rem;
+  border-radius:6px;
+  color: var(--text);
+  display:inline-block;
+}
+
+/* Tiny accessibility helper: focus outlines for keyboard users */
+:focus { outline: 3px solid rgba(0,111,106,0.14); outline-offset: 2px; }
+
+
+

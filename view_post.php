@@ -1,6 +1,7 @@
 <?php
 session_start();
 require 'config.php';
+require 'helpers.php';
 
 // Validate post ID
 $id = (int)($_GET['id'] ?? 0);
@@ -72,12 +73,23 @@ if (!empty($words)) {
     if ($relRes) $related = $relRes->fetch_all(MYSQLI_ASSOC);
 }
 
-// Fetch Comments
-$cmtStmt = $conn->prepare("SELECT * FROM comments WHERE post_id=? ORDER BY created_at DESC");
-$cmtStmt->bind_param("i", $id);
-$cmtStmt->execute();
-$comments = $cmtStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-$cmtStmt->close();
+// Fetch Comments (single place)
+$comments = db_select($conn, "SELECT c.id, c.message, c.created_at, c.user_id, u.username
+                             FROM comments c
+                             LEFT JOIN users u ON c.user_id = u.id
+                             WHERE c.post_id = ? ORDER BY c.created_at ASC", "i", [$post['id']]);
+
+// Likes info for like button
+$likesRow = db_select($conn, "SELECT COUNT(*) AS c FROM likes WHERE post_id = ?", "i", [$post['id']]);
+$likesCount = (int)($likesRow[0]['c'] ?? 0);
+
+$userLiked = false;
+if (!empty($_SESSION['user_id'])) {
+    $likedRow = db_select($conn, "SELECT id FROM likes WHERE post_id = ? AND user_id = ? LIMIT 1", "ii", [$post['id'], (int)$_SESSION['user_id']]);
+    $userLiked = !empty($likedRow);
+}
+
+$shareUrl = urlencode("http://localhost/blog_app/view_post.php?id=" . (int)$post['id']);
 ?>
 <!doctype html>
 <html lang="en">
@@ -89,6 +101,11 @@ $cmtStmt->close();
 <!-- Bootstrap + Icons -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<!-- Bootstrap (keep existing) -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Your stylesheet (cache-buster added) -->
+<link rel="stylesheet" href="assets/css/style.css?v=2">
 
 <style>
 body { background: #f5f7fa; }
@@ -205,14 +222,17 @@ body { background: #f5f7fa; }
 
     <hr>
 
-    <!-- Like + Share -->
-    <div class="d-flex gap-2 mb-3">
-      <form action="like.php" method="post">
-        <input type="hidden" name="post_id" value="<?php echo $id; ?>">
-        <button class="btn btn-primary btn-sm">👍 Like <span class="badge bg-light text-dark"><?php echo $post['likes_count']; ?></span></button>
+    <!-- Like + Share (single canonical block) -->
+    <div class="d-flex gap-2 mb-3 align-items-center">
+      <form action="like.php" method="post" class="d-inline">
+        <input type="hidden" name="_csrf" value="<?php echo htmlspecialchars(csrf_token()); ?>">
+        <input type="hidden" name="post_id" value="<?php echo (int)$post['id']; ?>">
+        <button type="submit" class="btn btn-sm <?php echo $userLiked ? 'btn-success' : 'btn-outline-primary'; ?>">
+          <?php echo $userLiked ? 'Liked' : 'Like'; ?> (<?php echo $likesCount; ?>)
+        </button>
       </form>
 
-      <?php $shareUrl = urlencode("http://localhost/blog_app/view_post.php?id=$id"); ?>
+      <!-- share buttons -->
       <a class="btn btn-outline-success btn-sm" href="https://api.whatsapp.com/send?text=<?php echo $shareUrl; ?>" target="_blank">WhatsApp</a>
       <a class="btn btn-outline-info btn-sm" href="https://www.linkedin.com/sharing/share-offsite/?url=<?php echo $shareUrl; ?>" target="_blank">LinkedIn</a>
       <a class="btn btn-outline-secondary btn-sm" href="https://twitter.com/intent/tweet?url=<?php echo $shareUrl; ?>" target="_blank">Twitter</a>
@@ -229,47 +249,69 @@ body { background: #f5f7fa; }
     <?php endif; ?>
   </div>
 
-  <!-- Comments -->
-  <div class="card mt-4 mb-4">
-    <div class="card-body">
-      <h5>Comments (<?php echo count($comments); ?>)</h5>
+  <!-- COMMENTS SECTION -->
+  <div id="comments" class="mt-4">
+    <h5>Comments</h5>
 
-      <!-- comment form -->
-      <form method="post" action="comment_submit.php" class="mb-3">
-        <input type="hidden" name="post_id" value="<?php echo $id; ?>">
-
-        <?php if (!empty($_SESSION['user_id'])): ?>
-          <input type="hidden" name="user_id" value="<?php echo (int)$_SESSION['user_id']; ?>">
-          <div class="mb-2 text-muted">Commenting as <strong><?php echo htmlspecialchars($_SESSION['username']); ?></strong></div>
-        <?php else: ?>
-          <input type="text" name="name" class="form-control mb-2" placeholder="Your name" required>
-        <?php endif; ?>
-
-        <textarea name="content" class="form-control mb-2" rows="3" placeholder="Write a comment..." required></textarea>
-        <button class="btn btn-primary btn-sm">Submit Comment</button>
+    <!-- Comment form (only if logged in) -->
+    <?php if (!empty($_SESSION['user_id'])): ?>
+      <form action="comment_submit.php" method="post" class="mb-3">
+        <input type="hidden" name="_csrf" value="<?php echo htmlspecialchars(csrf_token()); ?>">
+        <input type="hidden" name="post_id" value="<?php echo (int)$post['id']; ?>">
+        <div class="mb-2">
+          <textarea name="message" rows="3" class="form-control" placeholder="Write your comment..." required></textarea>
+        </div>
+        <div>
+          <button class="btn btn-primary btn-sm">Post Comment</button>
+        </div>
       </form>
+    <?php else: ?>
+      <div class="alert alert-secondary">Please <a href="login.php">log in</a> to post a comment.</div>
+    <?php endif; ?>
 
-      <!-- list comments -->
-      <?php if (empty($comments)): ?>
-        <div class="text-muted">No comments yet.</div>
-      <?php else: ?>
+    <!-- List comments -->
+    <?php if (empty($comments)): ?>
+      <div class="text-muted">No comments yet. Be the first to comment.</div>
+    <?php else: ?>
+      <div class="list-group">
         <?php foreach ($comments as $c): ?>
-          <div class="border-bottom pb-2 mb-3">
-            <strong><?php echo htmlspecialchars($c['name']); ?></strong>
-            <small class="text-muted"> · <?php echo $c['created_at']; ?></small>
-            <div><?php echo nl2br(htmlspecialchars($c['content'])); ?></div>
+          <div class="list-group-item d-flex justify-content-between align-items-start">
+            <div>
+              <div style="font-weight:700"><?php echo htmlspecialchars($c['username'] ?? 'Unknown'); ?></div>
+              <div class="small text-muted"><?php echo $c['created_at']; ?></div>
+              <div class="mt-2"><?php echo nl2br(htmlspecialchars($c['message'])); ?></div>
+            </div>
+
+            <div class="ms-3">
+              <?php if (is_admin($conn) || (int)$c['user_id'] === (int)($_SESSION['user_id'] ?? 0)): ?>
+                <a href="delete_comment.php?id=<?php echo (int)$c['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete this comment?')">Delete</a>
+              <?php endif; ?>
+            </div>
           </div>
         <?php endforeach; ?>
-      <?php endif; ?>
-
-    </div>
+      </div>
+    <?php endif; ?>
   </div>
+  <!-- END COMMENTS -->
 
 </div>
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.querySelector('form[action="comment_submit.php"]');
+  if (!form) return;
+  form.addEventListener('submit', function(e){
+    const msgEl = form.querySelector('textarea[name="message"]');
+    const msg = (msgEl && msgEl.value) ? msgEl.value.trim() : '';
+    if (msg.length < 2) {
+      e.preventDefault();
+      alert('Comment is too short.');
+    }
+  });
+});
+</script>
+
 </body>
 </html>
-
-

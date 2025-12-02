@@ -3,6 +3,7 @@
 // Requirements: session started and config.php in same folder
 session_start();
 require 'config.php';
+require 'helpers.php';
 
 if (empty($_SESSION['user_id'])) {
     header('Location: login.php');
@@ -81,12 +82,26 @@ $avatar_initials = initials($_SESSION['username'] ?? 'User');
 <!doctype html>
 <html lang="en">
 <head>
+  <!-- Bootstrap (keep existing) -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Your stylesheet (cache-buster added) -->
+<link rel="stylesheet" href="assets/css/style.css?v=2">
+
+  <link rel="stylesheet" href="assets/css/style.css">
+
+
   <meta charset="utf-8" />
   <title>Dashboard • ApexPlanet Blog</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+   <link rel="stylesheet" href="assets/css/style.css">
   <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+ 
+
   <!-- Bootstrap Icons -->
+   <link rel="stylesheet" href="assets/css/style.css">
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -96,6 +111,7 @@ $avatar_initials = initials($_SESSION['username'] ?? 'User');
       --sidebar-width: 260px;
       --bg-muted: #f4f7fb;
     }
+    
     body { background: var(--bg-muted); }
     .sidebar {
         width: var(--sidebar-width);
